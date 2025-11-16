@@ -140,6 +140,16 @@ const getUserStats = async (userId) => {
       status: { $ne: 'dropped' }
     }).populate('course');
 
+    // Calculate completion percentage for each enrollment before computing stats
+    for (const enrollment of enrollments) {
+      if (enrollment.course) {
+        await enrollment.calculateCompletion();
+      }
+    }
+    
+    // Save updated completion percentages
+    await Promise.all(enrollments.map(e => e.save()));
+
     // Calculate real-time statistics from actual enrollments
     const completedCourses = enrollments.filter(e => e.isCompleted || e.status === 'completed').length;
     const inProgressCourses = enrollments.filter(e => !e.isCompleted && e.status === 'active').length;

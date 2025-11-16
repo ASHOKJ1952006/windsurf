@@ -231,12 +231,18 @@ const StudentDashboard = () => {
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-gray-700/50">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-semibold text-gray-300">Overall Progress</span>
-                  <span className="text-2xl font-bold text-orange-400">{courseStats.averageProgress}%</span>
+                  <span className="text-2xl font-bold text-orange-400">
+                    {Math.max(0, Math.min(100, courseStats.averageProgress || 0))}%
+                  </span>
                 </div>
                 <div className="relative w-full bg-gray-700 rounded-full h-4 overflow-hidden">
                   <div
-                    className="absolute inset-0 bg-gradient-to-r from-blue-500 via-orange-500 to-purple-600 rounded-full transition-all duration-700 ease-out"
-                    style={{ width: `${courseStats.averageProgress}%` }}
+                    className="absolute inset-0 bg-gradient-to-r from-blue-500 via-orange-500 to-purple-600 rounded-full transition-all duration-1000 ease-out"
+                    style={{ 
+                      width: `${Math.max(0, Math.min(100, courseStats.averageProgress || 0))}%`,
+                      transitionProperty: 'width',
+                      transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                   </div>
@@ -405,13 +411,23 @@ const StudentDashboard = () => {
                       </div>
                     </div>
                     
-                    {/* Progress Bar */}
+                    {/* Enhanced Progress Bar */}
                     <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-4 overflow-hidden">
                       <div
-                        className="absolute inset-0 bg-gradient-to-r from-primary-500 via-primary-600 to-purple-600 rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${enrollment.completionPercentage || 0}%` }}
+                        className="absolute inset-0 bg-gradient-to-r from-primary-500 via-primary-600 to-purple-600 rounded-full transition-all duration-1000 ease-out"
+                        style={{
+                          width: `${Math.max(0, Math.min(100, enrollment.completionPercentage || 0))}%`,
+                          transitionProperty: 'width',
+                          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                          transitionDuration: '1000ms'
+                        }}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-end pr-2">
+                        <span className="text-[10px] font-bold text-white drop-shadow-sm">
+                          {Math.round(enrollment.completionPercentage || 0)}%
+                        </span>
                       </div>
                     </div>
                     

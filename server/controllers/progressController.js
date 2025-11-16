@@ -2,6 +2,7 @@ const Progress = require('../models/Progress');
 const Course = require('../models/Course');
 const Certificate = require('../models/Certificate');
 const User = require('../models/User');
+const { generateCertificatePDF } = require('../utils/certificateGenerator');
 
 // @desc    Get student progress for a course
 // @route   GET /api/progress/:courseId
@@ -795,7 +796,8 @@ exports.downloadCertificate = async (req, res) => {
     const certificate = await Certificate.findOne({
       certificateId,
       student: studentId
-    });
+    }).populate('course', 'title thumbnail')
+      .populate('instructor', 'name');
 
     if (!certificate) {
       return res.status(404).json({ message: 'Certificate not found' });
@@ -805,13 +807,28 @@ exports.downloadCertificate = async (req, res) => {
     certificate.incrementDownload();
     await certificate.save();
 
-    // For now, return certificate data with a mock PDF URL
-    const mockPdfUrl = `data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovUmVzb3VyY2VzIDw8Ci9Gb250IDw8Ci9GMSA0IDAgUgo+Pgo+PgovQ29udGVudHMgNSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9MZW5ndGggNDQKPj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihDZXJ0aWZpY2F0ZSBvZiBDb21wbGV0aW9uKSBUagpFVApzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0NSAwMDAwMCBuIAowMDAwMDAwMzIyIDAwMDAwIG4gCnRyYWlsZXIKPDwKL1NpemUgNgovUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDE0CiUlRU9G`;
+    // Generate the certificate PDF with all details
+    const certificateData = {
+      studentName: certificate.studentName,
+      courseName: certificate.courseName,
+      completedAt: certificate.completedAt,
+      certificateId: certificate.certificateId,
+      grade: certificate.grade,
+      instructorName: certificate.instructorName,
+      courseTitle: certificate.course?.title,
+      courseThumbnail: certificate.course?.thumbnail
+    };
+
+    const pdfBuffer = await generateCertificatePDF(certificateData);
+
+    // Convert buffer to base64 for data URL
+    const base64Pdf = pdfBuffer.toString('base64');
+    const pdfDataUrl = `data:application/pdf;base64,${base64Pdf}`;
     
     res.json({
       success: true,
       certificate,
-      downloadUrl: mockPdfUrl,
+      downloadUrl: pdfDataUrl,
       message: 'Certificate ready for download'
     });
   } catch (error) {
