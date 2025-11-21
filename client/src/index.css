@@ -4,14 +4,12 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900;
-    color: #FFFFFF !important; /* Bright white for all body text */
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100;
   }
   
   /* Global dark theme for all pages */
   #root {
     @apply min-h-screen;
-    color: #FFFFFF !important; /* Bright white */
   }
   
   /* Global Text Colors - All Bright White */
@@ -19,57 +17,8 @@
     @apply text-orange-400 font-bold;
   }
   
-  p {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
   a {
     @apply text-orange-400 hover:text-orange-300 transition-colors;
-  }
-  
-  label {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  /* Table text colors */
-  th {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  td {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  /* List text colors */
-  li {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  span {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  /* All text content default */
-  div {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  /* Additional text elements for maximum visibility */
-  small {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  strong {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  em {
-    color: #FFFFFF !important; /* Bright white */
-  }
-  
-  /* Placeholder text */
-  ::placeholder {
-    color: rgba(255, 255, 255, 0.6) !important; /* Bright white with opacity */
   }
   
   /* Selection color */
@@ -431,6 +380,69 @@
   backdrop-blur-md border border-gray-700/50 shadow-xl;
 }
 
+.card,
+.dashboard-card,
+.dashboard-stat-card,
+.cta-card {
+  color: #e5e7eb;
+}
+
+.card.from-white,
+.card.to-white,
+.card.via-white,
+.dashboard-card.from-white,
+.dashboard-card.to-white,
+.dashboard-card.via-white,
+.cta-card.from-white,
+.cta-card.to-white,
+.cta-card.via-white {
+  color: #1f2937;
+}
+
+.card.from-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.card.to-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.card.via-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.dashboard-card.from-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.dashboard-card.to-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.dashboard-card.via-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.cta-card.from-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.cta-card.to-white :is(p, span, div, li, label, small, h3, h4, h5, h6),
+.cta-card.via-white :is(p, span, div, li, label, small, h3, h4, h5, h6) {
+  color: #1f2937 !important;
+}
+
+.card :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.dashboard-card :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                    .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.dashboard-stat-card :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                         .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.cta-card :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+             .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600) {
+  color: #cbd5f5 !important;
+}
+
+.card.from-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                     .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.card.to-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                   .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.card.via-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                    .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.dashboard-card.from-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                               .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.dashboard-card.to-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                             .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.dashboard-card.via-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                              .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.cta-card.from-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                         .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.cta-card.to-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                       .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600),
+.cta-card.via-white :is(.text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+                        .dark\:text-gray-400, .dark\:text-gray-500, .dark\:text-gray-600) {
+  color: #374151 !important;
+}
+
 /* Text Color Utility Classes */
 .text-heading {
   @apply text-orange-400 font-bold;
@@ -583,6 +595,39 @@
 .bg-red-100 small,
 .bg-red-100 h3,
 .bg-red-100 h4,
+.from-white,
+.from-white p,
+.from-white span,
+.from-white div,
+.from-white li,
+.from-white label,
+.from-white small,
+.from-white h3,
+.from-white h4,
+.from-white h5,
+.from-white h6,
+.to-white,
+.to-white p,
+.to-white span,
+.to-white div,
+.to-white li,
+.to-white label,
+.to-white small,
+.to-white h3,
+.to-white h4,
+.to-white h5,
+.to-white h6,
+.via-white,
+.via-white p,
+.via-white span,
+.via-white div,
+.via-white li,
+.via-white label,
+.via-white small,
+.via-white h3,
+.via-white h4,
+.via-white h5,
+.via-white h6,
 .from-green-50,
 .from-green-100,
 .to-blue-50,

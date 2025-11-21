@@ -28,6 +28,17 @@ export const addAnswer = createAsyncThunk('forum/addAnswer', async ({ postId, co
   return data.post
 })
 
+export const upvotePost = createAsyncThunk('forum/upvotePost', async (postId) => {
+  const { data } = await api.post(`/forums/${postId}/upvote`)
+  return { postId, upvotes: data.upvotes }
+})
+
+// Fetch a post to increment views on the server and return updated post
+export const incrementPostViews = createAsyncThunk('forum/incrementViews', async (postId) => {
+  const { data } = await api.get(`/forums/${postId}`)
+  return data.post
+})
+
 const forumSlice = createSlice({
   name: 'forum',
   initialState,
@@ -49,6 +60,29 @@ const forumSlice = createSlice({
       })
       .addCase(addAnswer.fulfilled, (state, action) => {
         state.currentPost = action.payload
+      })
+      .addCase(upvotePost.fulfilled, (state, action) => {
+        const { postId, upvotes } = action.payload
+        const p = state.posts.find(p => p._id === postId)
+        if (p) {
+          // Update upvotes count; server returns length
+          if (Array.isArray(p.upvotes)) p.upvotes = new Array(upvotes).fill(0)
+          else p.upvotes = new Array(upvotes).fill(0)
+        }
+        if (state.currentPost?._id === postId) {
+          if (Array.isArray(state.currentPost.upvotes)) state.currentPost.upvotes = new Array(upvotes).fill(0)
+          else state.currentPost.upvotes = new Array(upvotes).fill(0)
+        }
+      })
+      .addCase(incrementPostViews.fulfilled, (state, action) => {
+        const updated = action.payload
+        const idx = state.posts.findIndex(p => p._id === updated._id)
+        if (idx !== -1) {
+          state.posts[idx] = { ...state.posts[idx], views: updated.views }
+        }
+        if (state.currentPost?._id === updated._id) {
+          state.currentPost.views = updated.views
+        }
       })
   },
 })

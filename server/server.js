@@ -41,7 +41,31 @@ mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('✅ MongoDB connected to:', MONGO_URI))
+.then(async () => {
+  console.log('✅ MongoDB connected to:', MONGO_URI)
+  // Seed default admin (dev helper)
+  try {
+    const shouldSeed = (process.env.SEED_DEFAULT_ADMIN || 'true') !== 'false'
+    if (shouldSeed) {
+      const User = require('./models/User')
+      // Desired admins to ensure exist
+      const seedAdmins = [
+        { name: 'Admin', email: process.env.ADMIN_PRIMARY_EMAIL || 'admin@gmail.com', password: process.env.ADMIN_PRIMARY_PASSWORD || '123456' },
+        { name: 'Admin Two', email: process.env.ADMIN_SECONDARY_EMAIL || 'admin1@gmail.com', password: process.env.ADMIN_SECONDARY_PASSWORD || '123456' },
+        { name: 'Admin Three', email: process.env.ADMIN_TERTIARY_EMAIL || 'admin2@gmail.com', password: process.env.ADMIN_TERTIARY_PASSWORD || '123456' },
+      ]
+      for (const adm of seedAdmins) {
+        const exists = await User.exists({ email: adm.email })
+        if (!exists) {
+          await User.create({ name: adm.name, email: adm.email, password: adm.password, role: 'admin' })
+          console.log('👨‍💼 Seeded admin:', adm.email)
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️  Admin seeding skipped:', e.message)
+  }
+})
 .catch(err => {
   console.error('❌ MongoDB connection error:', err);
   console.log('💡 Make sure MongoDB is running and MONGO_URI is set in .env file');

@@ -83,9 +83,9 @@ const Certificates = () => {
     }
   }
 
-  const generateCertificate = async (courseId) => {
+  const generateCertificate = async (enrollmentId) => {
     try {
-      const { data } = await api.post(`/progress/${courseId}/certificate`)
+      const { data } = await api.post(`/enrollments/${enrollmentId}/certificate`)
       
       if (data.success) {
         toast.success('Certificate generated successfully!')
@@ -178,7 +178,7 @@ const Certificates = () => {
                   <Trophy className="h-6 w-6 text-yellow-500" />
                 </div>
                 <button
-                  onClick={() => generateCertificate(enrollment.course._id)}
+                  onClick={() => generateCertificate(enrollment._id)}
                   className="w-full btn btn-outline border-blue-300 text-blue-600 hover:bg-blue-50"
                 >
                   <Plus className="h-4 w-4 mr-2" />

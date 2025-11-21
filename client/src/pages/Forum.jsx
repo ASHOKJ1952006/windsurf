@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchPosts, createPost } from '../store/slices/forumSlice'
-import { MessageSquare, ThumbsUp, Eye, Plus } from 'lucide-react'
+import { fetchPosts, createPost, addAnswer, upvotePost, incrementPostViews } from '../store/slices/forumSlice'
+import { MessageSquare, ThumbsUp, Eye, Plus, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const Forum = () => {
@@ -10,6 +10,7 @@ const Forum = () => {
   const { isAuthenticated } = useSelector((state) => state.auth)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newPost, setNewPost] = useState({ title: '', content: '', category: 'question', tags: '' })
+  const [answerInputs, setAnswerInputs] = useState({})
 
   useEffect(() => {
     dispatch(fetchPosts())
@@ -21,7 +22,6 @@ const Forum = () => {
       toast.error('Please login to create a post')
       return
     }
-
     try {
       await dispatch(createPost({
         ...newPost,
@@ -32,6 +32,40 @@ const Forum = () => {
       setNewPost({ title: '', content: '', category: 'question', tags: '' })
     } catch (error) {
       toast.error('Failed to create post')
+    }
+  }
+
+  const handleUpvote = async (postId) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to like posts')
+      return
+    }
+    try {
+      await dispatch(upvotePost(postId)).unwrap()
+    } catch (e) {
+      toast.error('Failed to like post')
+    }
+  }
+
+  const handleIncrementViews = (postId) => {
+    dispatch(incrementPostViews(postId))
+  }
+
+  const handleAddAnswer = async (postId) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to comment')
+      return
+    }
+    const content = answerInputs[postId]?.trim()
+    if (!content) return
+    try {
+      await dispatch(addAnswer({ postId, content })).unwrap()
+      setAnswerInputs(prev => ({ ...prev, [postId]: '' }))
+      // refresh list to update answers count
+      dispatch(fetchPosts())
+      toast.success('Comment added')
+    } catch (e) {
+      toast.error('Failed to add comment')
     }
   }
 
@@ -63,8 +97,29 @@ const Forum = () => {
                     }}
                   />
                 </div>
+                {/* Quick comment input */}
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    type="text"
+                    className="input flex-1 bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-500"
+                    placeholder="Write a comment..."
+                    value={answerInputs[post._id] || ''}
+                    onChange={(e) => setAnswerInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
+                  />
+                  <button
+                    className="btn btn-primary flex items-center"
+                    onClick={() => handleAddAnswer(post._id)}
+                    title="Comment"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-semibold mb-2 hover:text-primary-600 cursor-pointer">
+                  <h3
+                    className="text-xl font-semibold mb-2 hover:text-primary-600 cursor-pointer"
+                    onClick={() => handleIncrementViews(post._id)}
+                    title="Open post"
+                  >
                     {post.title}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
@@ -75,10 +130,14 @@ const Forum = () => {
                     <span className="px-2 py-1 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 rounded">
                       {post.category}
                     </span>
-                    <div className="flex items-center">
+                    <button
+                      onClick={() => handleUpvote(post._id)}
+                      className="flex items-center hover:text-primary-600"
+                      title="Like"
+                    >
                       <ThumbsUp className="h-4 w-4 mr-1" />
                       {post.upvotes?.length || 0}
-                    </div>
+                    </button>
                     <div className="flex items-center">
                       <MessageSquare className="h-4 w-4 mr-1" />
                       {post.answers?.length || 0}
@@ -94,6 +153,17 @@ const Forum = () => {
                         <span key={index} className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
                           {tag}
                         </span>
+                      ))}
+                    </div>
+                  )}
+                  {/* Recent comments preview */}
+                  {post.answers?.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {post.answers.slice(Math.max(0, post.answers.length - 3)).map((ans, idx) => (
+                        <div key={idx} className="text-sm bg-white text-black dark:bg-gray-800 dark:text-gray-100 rounded-md p-2">
+                          <span className="font-medium mr-2 text-black dark:text-gray-100">Comment:</span>
+                          <span className="text-black dark:text-gray-100">{ans.content}</span>
+                        </div>
                       ))}
                     </div>
                   )}

@@ -35,32 +35,42 @@ const Navbar = () => {
                 <Home className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
                 Home
               </Link>
-              <Link to="/courses" className="nav-link group">
-                <BookOpen className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
-                Courses
-              </Link>
+              {user?.role === 'student' && (
+                <Link to="/courses" className="nav-link group">
+                  <BookOpen className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
+                  Courses
+                </Link>
+              )}
               <Link to="/forum" className="nav-link group">
                 <MessageSquare className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
                 Forum
               </Link>
-              <Link to="/jobs" className="nav-link group">
-                <Briefcase className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
-                Jobs
-              </Link>
+              {user?.role === 'student' && (
+                <Link to="/jobs" className="nav-link group">
+                  <Briefcase className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
+                  Jobs
+                </Link>
+              )}
               {isAuthenticated && (
                 <>
-                  <Link to="/recommendations" className="nav-link group">
-                    <TrendingUp className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
-                    For You
-                  </Link>
-                  <Link to="/mentorships" className="nav-link group">
-                    <Users className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
-                    Mentorship
-                  </Link>
-                  <Link to="/portfolio" className="nav-link group">
-                    <Folder className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
-                    Portfolio
-                  </Link>
+                  {user?.role === 'student' && (
+                    <Link to="/recommendations" className="nav-link group">
+                      <TrendingUp className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
+                      For You
+                    </Link>
+                  )}
+                  {user?.role !== 'admin' && (
+                    <Link to="/mentorships" className="nav-link group">
+                      <Users className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
+                      Mentorship
+                    </Link>
+                  )}
+                  {user?.role !== 'admin' && (
+                    <Link to="/portfolio" className="nav-link group">
+                      <Folder className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
+                      Portfolio
+                    </Link>
+                  )}
                   {user?.role === 'student' && (
                     <Link to="/certificates" className="nav-link group">
                       <Award className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
@@ -122,12 +132,18 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-1 bg-gray-800/50 rounded-lg mt-2 p-2 backdrop-blur-sm border border-gray-700/50">
             <Link to="/" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Home</Link>
-            <Link to="/courses" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Courses</Link>
+            {user?.role === 'student' && (
+              <Link to="/courses" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Courses</Link>
+            )}
             <Link to="/forum" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Forum</Link>
-            <Link to="/jobs" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Jobs</Link>
+            {user?.role === 'student' && (
+              <Link to="/jobs" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Jobs</Link>
+            )}
             {isAuthenticated && (
               <>
-                <Link to="/mentorships" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Mentorship</Link>
+                {user?.role !== 'admin' && (
+                  <Link to="/mentorships" className="block px-3 py-2 text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 rounded-lg transition-all">Mentorship</Link>
+                )}
                 <Link to="/dashboard" className="block px-3 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-all">Dashboard</Link>
               </>
             )}

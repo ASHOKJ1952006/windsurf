@@ -86,17 +86,17 @@ const Recommendations = () => {
           )}
         </div>
         
-        <p className="mb-4 line-clamp-3" style={{ color: '#1f2937 !important' }}>{course.description}</p>
+        <p className="mb-4 line-clamp-3 text-gray-800 dark:text-gray-200">{course.description}</p>
         
         {/* Match Reasons */}
         {showReasons && course.matchReasons && course.matchReasons.length > 0 && (
           <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-sm font-medium mb-2" style={{ color: '#1e40af !important' }}>
+            <p className="text-sm font-medium mb-2 text-blue-800 dark:text-blue-300">
               🎯 Why we recommend this:
             </p>
-            <ul className="text-sm space-y-1" style={{ color: '#1e3a8a !important' }}>
+            <ul className="text-sm space-y-1 text-blue-800 dark:text-blue-300">
               {course.matchReasons.slice(0, 2).map((reason, index) => (
-                <li key={index} className="flex items-start" style={{ color: '#1e3a8a !important' }}>
+                <li key={index} className="flex items-start">
                   <span className="mr-2">•</span>
                   <span>{reason}</span>
                 </li>
@@ -106,7 +106,7 @@ const Recommendations = () => {
         )}
 
         {/* Course Stats */}
-        <div className="flex items-center text-sm mb-4 space-x-4" style={{ color: '#1f2937 !important' }}>
+        <div className="flex items-center text-sm mb-4 space-x-4 text-gray-800 dark:text-gray-200">
           <div className="flex items-center">
             <Star className="h-4 w-4 text-yellow-500 mr-1" />
             <span>{course.averageRating?.toFixed(1)}</span>
@@ -127,11 +127,11 @@ const Recommendations = () => {
             <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 rounded-full text-xs font-medium">
               {course.category}
             </span>
-            <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs" style={{ color: '#1f2937 !important' }}>
+            <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs text-gray-800 dark:text-gray-200">
               {course.level}
             </span>
           </div>
-          <div className="text-sm" style={{ color: '#4b5563 !important' }}>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             by {course.instructor?.name}
           </div>
         </div>

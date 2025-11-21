@@ -6,7 +6,7 @@ import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 const InstructorDashboard = () => {
-  const { user } = useSelector((state) => state.auth)
+  const { user, isAuthenticated, loading: authLoading } = useSelector((state) => state.auth)
   const navigate = useNavigate()
   const [courses, setCourses] = useState([])
   const [stats, setStats] = useState({
@@ -17,14 +17,15 @@ const InstructorDashboard = () => {
   })
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated || user?.role !== 'instructor') return
     if (user?.id) {
       fetchMyCourses()
     }
-  }, [user])
+  }, [user, isAuthenticated, authLoading])
 
   const fetchMyCourses = async () => {
     try {
-      if (!user?.id) {
+      if (!isAuthenticated || user?.role !== 'instructor' || !user?.id) {
         console.log('User ID not available, skipping course fetch')
         return
       }
@@ -46,7 +47,9 @@ const InstructorDashboard = () => {
       })
     } catch (error) {
       console.error('Failed to fetch courses:', error)
-      toast.error('Failed to fetch courses')
+      if (error?.response?.status !== 401) {
+        toast.error('Failed to fetch courses')
+      }
     }
   }
 

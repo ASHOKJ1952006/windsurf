@@ -1,4 +1,5 @@
 const Enrollment = require('../models/Enrollment');
+const Progress = require('../models/Progress');
 const Course = require('../models/Course');
 const User = require('../models/User');
 const PDFDocument = require('pdfkit');
@@ -88,10 +89,28 @@ exports.getMyEnrollments = async (req, res) => {
       })
       .sort({ lastAccessedAt: -1 }); // Sort by most recently accessed
 
-    // Calculate completion percentage for each enrollment
+    // Calculate completion percentage for each enrollment and sync with Progress when available
     for (const enrollment of enrollments) {
       if (enrollment.course) {
         await enrollment.calculateCompletion();
+
+        // If Progress document exists, use it to enhance completion values
+        try {
+          const courseId = enrollment.course._id || enrollment.course;
+          const prog = await Progress.findOne({ student: req.user.id, course: courseId }).select('overallProgress isCompleted completedAt');
+          if (prog) {
+            const overall = Math.max(0, Math.min(100, prog.overallProgress || 0));
+            // Prefer higher of Enrollment and Progress to avoid regressions
+            enrollment.completionPercentage = Math.max(enrollment.completionPercentage || 0, overall);
+            if (prog.isCompleted) {
+              enrollment.isCompleted = true;
+              enrollment.status = 'completed';
+              if (!enrollment.completedAt && prog.completedAt) enrollment.completedAt = prog.completedAt;
+            }
+          }
+        } catch (e) {
+          // Non-fatal: if Progress lookup fails, proceed with Enrollment-only data
+        }
       }
     }
 
@@ -243,7 +262,21 @@ exports.generateCertificate = async (req, res) => {
     }
 
     if (!enrollment.isCompleted) {
-      return res.status(400).json({ message: 'Course not completed yet' });
+      // Fallback to Progress: if progress indicates completion, sync and proceed
+      try {
+        const progress = await Progress.findOne({ student: req.user.id, course: enrollment.course._id || enrollment.course })
+          .select('isCompleted completedAt overallProgress');
+        if (progress && progress.isCompleted) {
+          enrollment.isCompleted = true;
+          enrollment.status = 'completed';
+          enrollment.completedAt = enrollment.completedAt || progress.completedAt || new Date();
+          enrollment.completionPercentage = Math.max(enrollment.completionPercentage || 0, progress.overallProgress || 100, 100);
+        } else {
+          return res.status(400).json({ message: 'Course not completed yet' });
+        }
+      } catch (e) {
+        return res.status(400).json({ message: 'Course not completed yet' });
+      }
     }
 
     if (enrollment.certificateUrl) {

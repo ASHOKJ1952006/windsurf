@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { Users, BookOpen, Briefcase, TrendingUp, CheckCircle, XCircle, Plus, X, Edit, Trash2, FileText } from 'lucide-react'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 const AdminDashboard = () => {
   const navigate = useNavigate()
+  const { user, isAuthenticated, loading: authLoading } = useSelector((state) => state.auth)
+  const [adminMode, setAdminMode] = useState('')
+  const [showModeDialog, setShowModeDialog] = useState(false)
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCourses: 0,
@@ -36,36 +40,55 @@ const AdminDashboard = () => {
   const [newSkill, setNewSkill] = useState('')
 
   useEffect(() => {
-    fetchStats()
-    fetchPendingCourses()
-    fetchUsers()
-    fetchJobs()
-  }, [])
+    if (authLoading) return
+    if (isAuthenticated && user?.role === 'admin') {
+      setShowModeDialog(true)
+      fetchStats()
+      fetchPendingCourses()
+      fetchUsers()
+      fetchJobs()
+    }
+  }, [isAuthenticated, authLoading, user?.role])
+
+  const chooseMode = (mode) => {
+    const normalized = mode === 'recruiter' ? 'recruiter' : 'web'
+    setAdminMode(normalized)
+    setShowModeDialog(false)
+  }
 
   const fetchStats = async () => {
     try {
+      if (!isAuthenticated || user?.role !== 'admin') return
       const { data } = await api.get('/admin/stats')
       setStats(data.stats)
     } catch (error) {
-      toast.error('Failed to fetch stats')
+      if (error?.response?.status !== 401) {
+        toast.error('Failed to fetch stats')
+      }
     }
   }
 
   const fetchPendingCourses = async () => {
     try {
+      if (!isAuthenticated || user?.role !== 'admin') return
       const { data } = await api.get('/admin/courses', { params: { isApproved: false } })
       setPendingCourses(data.courses || [])
     } catch (error) {
-      toast.error('Failed to fetch pending courses')
+      if (error?.response?.status !== 401) {
+        toast.error('Failed to fetch pending courses')
+      }
     }
   }
 
   const fetchUsers = async () => {
     try {
+      if (!isAuthenticated || user?.role !== 'admin') return
       const { data } = await api.get('/admin/users', { params: { limit: 10 } })
       setUsers(data.users || [])
     } catch (error) {
-      toast.error('Failed to fetch users')
+      if (error?.response?.status !== 401) {
+        toast.error('Failed to fetch users')
+      }
     }
   }
 
@@ -93,10 +116,13 @@ const AdminDashboard = () => {
 
   const fetchJobs = async () => {
     try {
+      if (!isAuthenticated) return
       const { data } = await api.get('/jobs', { params: { limit: 10 } })
       setJobs(data.jobs || [])
     } catch (error) {
-      toast.error('Failed to fetch jobs')
+      if (error?.response?.status !== 401) {
+        toast.error('Failed to fetch jobs')
+      }
     }
   }
 
@@ -246,6 +272,24 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {showModeDialog && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h2 className="text-2xl font-semibold mb-2">Choose Admin Mode</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">Select how you want to use the admin dashboard.</p>
+            <div className="grid grid-cols-1 gap-3">
+              <button onClick={() => chooseMode('web')} className="btn btn-outline justify-between">
+                <span className="font-medium">Web Admin</span>
+                <span className="text-xs text-gray-500 ml-2">User management only</span>
+              </button>
+              <button onClick={() => chooseMode('recruiter')} className="btn btn-primary justify-between">
+                <span className="font-medium">Recruiter</span>
+                <span className="text-xs text-white/80 ml-2">Full access incl. jobs</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold">Admin Dashboard</h1>
         <div className="flex space-x-3">
@@ -256,13 +300,15 @@ const AdminDashboard = () => {
             <FileText className="h-5 w-5 mr-2" />
             Job Applications
           </button>
-          <button
-            onClick={() => openJobModal()}
-            className="btn btn-primary flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Job
-          </button>
+          {adminMode === 'recruiter' && (
+            <button
+              onClick={() => openJobModal()}
+              className="btn btn-primary flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Job
+            </button>
+          )}
         </div>
       </div>
 

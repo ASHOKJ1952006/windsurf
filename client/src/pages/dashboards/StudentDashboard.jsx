@@ -10,7 +10,7 @@ import { io } from 'socket.io-client'
 
 const StudentDashboard = () => {
   const dispatch = useDispatch()
-  const { user } = useSelector((state) => state.auth)
+  const { user, isAuthenticated, loading: authLoading } = useSelector((state) => state.auth)
   const { enrollments } = useSelector((state) => state.enrollments)
   const { recommendations } = useSelector((state) => state.courses)
   const [chatMessage, setChatMessage] = useState('')
@@ -23,26 +23,21 @@ const StudentDashboard = () => {
   const [socket, setSocket] = useState(null)
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated || user?.role !== 'student') return
+
     dispatch(fetchMyEnrollments())
     dispatch(fetchRecommendations())
     fetchCertificates()
     fetchCourseStats()
 
-    // Initialize Socket.IO for real-time updates
     const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000')
     setSocket(newSocket)
 
-    // Join user's personal room
     if (user?._id) {
       newSocket.emit('join', `user_${user._id}`)
     }
 
-    // Listen for course stats updates
-    newSocket.on('courseStatsUpdate', (stats) => {
-      setCourseStats(stats)
-    })
-
-    // Listen for course completion
+    newSocket.on('courseStatsUpdate', (stats) => setCourseStats(stats))
     newSocket.on('courseCompleted', () => {
       toast.success('🎉 Course completed! Congratulations!')
       dispatch(fetchMyEnrollments())
@@ -50,20 +45,23 @@ const StudentDashboard = () => {
       fetchCertificates()
     })
 
-    // Cleanup on unmount
     return () => {
-      newSocket.close()
+      try { newSocket.close() } catch {}
     }
-  }, [dispatch, user?._id])
+  }, [dispatch, isAuthenticated, authLoading, user?._id, user?.role])
 
   const fetchCourseStats = async () => {
     try {
+      if (!isAuthenticated) return
       setStatsLoading(true)
       const { data } = await api.get('/enrollments/stats')
       setCourseStats(data.stats)
     } catch (error) {
-      console.error('Failed to fetch course stats:', error)
-      toast.error('Failed to load statistics')
+      // Suppress errors when logged out or token missing/expired
+      if (error?.response?.status !== 401) {
+        console.error('Failed to fetch course stats:', error)
+        toast.error('Failed to load statistics')
+      }
     } finally {
       setStatsLoading(false)
     }
@@ -71,10 +69,13 @@ const StudentDashboard = () => {
 
   const fetchCertificates = async () => {
     try {
+      if (!isAuthenticated) return
       const { data } = await api.get('/progress/certificates')
       setCertificates(data.certificates)
     } catch (error) {
-      console.error('Failed to fetch certificates')
+      if (error?.response?.status !== 401) {
+        console.error('Failed to fetch certificates')
+      }
     }
   }
 
@@ -119,6 +120,18 @@ const StudentDashboard = () => {
     setCourseToUnenroll(null)
   }
 
+  const derivedAverageProgress = (() => {
+    if (!enrollments || enrollments.length === 0) return 0
+    const total = enrollments.reduce((acc, enrollment) => {
+      const isComplete = enrollment.isCompleted || enrollment.status === 'completed'
+      const pct = isComplete ? 100 : (enrollment.completionPercentage || 0)
+      return acc + pct
+    }, 0)
+    return Math.round(total / enrollments.length)
+  })()
+
+  const overallProgress = Math.max(0, Math.min(100, derivedAverageProgress))
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Animated Background */}
@@ -130,7 +143,7 @@ const StudentDashboard = () => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8 animate-fade-in-down">
-          <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-white via-orange-200 to-orange-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-2 text-white">
             Welcome back, {user?.name}! 👋
           </h1>
           <p className="text-gray-300 text-lg">Continue your learning journey</p>
@@ -205,7 +218,7 @@ const StudentDashboard = () => {
                 {statsLoading ? (
                   <div className="h-9 w-16 bg-gray-700/50 animate-pulse rounded"></div>
                 ) : (
-                  <p className="text-3xl font-bold text-white">{courseStats?.averageProgress || 0}%</p>
+                  <p className="text-3xl font-bold text-white">{overallProgress}%</p>
                 )}
               </div>
               <div className="stat-icon-wrapper bg-indigo-500/20 border-indigo-500/30">
@@ -232,14 +245,14 @@ const StudentDashboard = () => {
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-semibold text-gray-300">Overall Progress</span>
                   <span className="text-2xl font-bold text-orange-400">
-                    {Math.max(0, Math.min(100, courseStats.averageProgress || 0))}%
+                    {overallProgress}%
                   </span>
                 </div>
                 <div className="relative w-full bg-gray-700 rounded-full h-4 overflow-hidden">
                   <div
                     className="absolute inset-0 bg-gradient-to-r from-blue-500 via-orange-500 to-purple-600 rounded-full transition-all duration-1000 ease-out"
                     style={{ 
-                      width: `${Math.max(0, Math.min(100, courseStats.averageProgress || 0))}%`,
+                      width: `${overallProgress}%`,
                       transitionProperty: 'width',
                       transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
                     }}
@@ -379,7 +392,10 @@ const StudentDashboard = () => {
                   .filter(e => !e.isCompleted && e.status === 'active')
                   .slice(0, 3)
                   .map((enrollment) => (
-                  <div key={enrollment._id} className="group border dark:border-gray-700 rounded-xl p-5 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-300 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-850">
+                  <div
+                    key={enrollment._id}
+                    className="group border dark:border-gray-700 rounded-xl p-5 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-300 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-850 text-gray-900 dark:text-gray-100"
+                  >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
@@ -397,7 +413,7 @@ const StudentDashboard = () => {
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                            {enrollment.completionPercentage || 0}%
+                            {(enrollment.isCompleted || enrollment.status === 'completed') ? 100 : (enrollment.completionPercentage || 0)}%
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">complete</div>
                         </div>
@@ -416,7 +432,7 @@ const StudentDashboard = () => {
                       <div
                         className="absolute inset-0 bg-gradient-to-r from-primary-500 via-primary-600 to-purple-600 rounded-full transition-all duration-1000 ease-out"
                         style={{
-                          width: `${Math.max(0, Math.min(100, enrollment.completionPercentage || 0))}%`,
+                          width: `${Math.max(0, Math.min(100, (enrollment.isCompleted || enrollment.status === 'completed') ? 100 : (enrollment.completionPercentage || 0)))}%`,
                           transitionProperty: 'width',
                           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
                           transitionDuration: '1000ms'
@@ -426,7 +442,7 @@ const StudentDashboard = () => {
                       </div>
                       <div className="absolute inset-0 flex items-center justify-end pr-2">
                         <span className="text-[10px] font-bold text-white drop-shadow-sm">
-                          {Math.round(enrollment.completionPercentage || 0)}%
+                          {Math.round((enrollment.isCompleted || enrollment.status === 'completed') ? 100 : (enrollment.completionPercentage || 0))}%
                         </span>
                       </div>
                     </div>
